@@ -1,0 +1,172 @@
+---
+title: "logit_musicas"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(gmodels)
+require(vcd)
+require(lme4)
+library(nlme)
+library(caret)
+library(pscl)
+library(DT)
+library(ggplot2)
+theme_set(theme_bw())
+library(GGally)
+library(dplyr, warn.conflicts = F)
+library(broom)
+
+library(car)
+library(readr)
+library(caret)
+library(extraTrees)
+```
+
+```{r lib}
+compare_glms <- function(baseline, model){
+  modelChi <- baseline$deviance - model$deviance
+  chidf <- baseline$df.residual - model$df.residual
+  chisq.prob <- 1 - pchisq(modelChi, chidf)
+  print(paste(modelChi, chidf, chisq.prob))
+}
+
+compare_null <- function(baselineModel){
+  modelChi <- baselineModel$null.deviance - baselineModel$deviance
+  chidf <- baselineModel$df.null - baselineModel$df.residual
+  chisq.prob <- 1 - pchisq(modelChi, chidf)
+  print(paste(modelChi, chidf, chisq.prob))
+}
+
+computePseudoR2 <- function(baselineModel, completeModel){
+  print("Hosmer and Lemeshow")
+  print(  completeModel@devcomp$cmp['dev'] /  baselineModel@devcomp$cmp['dev'] )
+  print("Hosmer and Lemeshow")
+  print(  (baselineModel@devcomp$cmp['dev'] - completeModel@devcomp$cmp['dev']) /  baselineModel@devcomp$cmp['dev'] )
+  print("Cox and Snells")
+  cs <- 1 - exp( (completeModel@devcomp$cmp['dev'] - baselineModel@devcomp$cmp['dev']) / nrow(completeModel@frame)  )
+  print(  cs  )
+  print("Nagelkerke")
+  print(  cs / ( 1 - exp(- baselineModel@devcomp$cmp['dev'] / nrow(completeModel@frame) )  )  )
+
+}
+```
+
+```{r read}
+#Leitura dos dados
+raw_data <- read.csv("./training_set_sl=8_chromaOTI_mfcc.csv", header=TRUE)
+
+data = raw_data %>% mutate_at( vars(sim.A.B....sim.A.C.), as.factor)
+#Scale or not scale input?
+
+```
+
+```{r model.lib}
+create_model_only_int = function(the_data){
+  return(glm(
+    sim.A.B....sim.A.C. ~ 1,
+    data = the_data,
+    family = binomial())) 
+  #gls(choice ~ 1, data = agrad, method = "ML")
+}
+
+create_model_w_interact = function(the_data){
+  return(glm(
+    sim.A.B....sim.A.C. ~ chroma_diff + mfcc_diff,
+    data = the_data,
+    family = binomial()))#simple_chroma_AB + simple_chroma_AC + simple_chroma_BC + simple_mfcc_AB + simple_mfcc_AC + simple_mfcc_BC
+}
+
+split.dataset <- function(dataset, train.perc) {
+  splitted.dataset <- list()
+  test.perc <- 1.0 - train.perc
+  train.size <- nrow(dataset)*train.perc
+  train.rows <- sample(nrow(dataset),train.size)
+  splitted.dataset$train.set <- dataset %>% filter(row_number() %in% train.rows)
+  splitted.dataset$test.set <- dataset %>% filter(!(row_number() %in% train.rows))
+  return(splitted.dataset)
+}
+```
+
+```{r}
+#Explanatory Model Using all data
+data$chroma_diff <- (data$simple_chroma_AB - data$simple_chroma_AC) / data$simple_chroma_BC
+data$mfcc_diff <- (data$simple_mfcc_AB - data$simple_mfcc_AC) / data$simple_mfcc_BC
+
+intercept_model <- create_model_only_int(data)
+complete_model <- create_model_w_interact(data)
+summary(intercept_model)
+summary(complete_model)
+logLik(intercept_model)*-2 
+logLik(complete_model)*-2
+
+#computePseudoR2(baselineModel = intercept_model, completeModel = complete_model)
+vif(complete_model)
+#pR2(complete_model)
+
+#Confidence intervals: https://stats.idre.ucla.edu/r/dae/logit-regression/
+#cc <- confint(complete_model, parm="beta_", level = 0.95, method="boot", nsim=1, parallel="multicore", ncpus=2)
+
+#Predicting: https://www.theanalysisfactor.com/r-tutorial-glm1/; https://www.tatvic.com/blog/logistic-regression-with-r/; https://www.analyticsvidhya.com/blog/2015/11/beginners-guide-on-logistic-regression-in-r/; **https://www.r-bloggers.com/evaluating-logistic-regression-models/
+
+#Simple partition with 80% for training and 20% for testing
+Train <- createDataPartition(data$sim.A.B....sim.A.C., p=0.8, list=FALSE, times=100)
+
+results_values <- data.frame(accuracy=double(), precision=double(), recall=double(), f1=double())
+for(i in 1:ncol(Train)){
+  training <- data[ Train[,i], ]
+  testing <- data[ -Train[,i], ]
+  #splitted.dataset <- split.dataset(data, 0.8)
+  #train.set <- splitted.dataset$train.set
+  #test.set <- splitted.dataset$test.set
+  #Simple fit
+  #mod_fit <- train(sim.A.B....sim.A.C. ~ simple_chroma_AB + simple_chroma_AC + simple_chroma_BC + simple_mfcc_AB + simple_mfcc_AC + simple_mfcc_BC, data=train.set, method="glm", family="binomial")
+  #exp(coef(mod_fit$finalModel))
+  
+  #Predicting and accuracy
+  #predict(mod_fit, newdata=testing)
+  #predict(mod_fit, newdata=testing, type="prob")
+  #pred = predict(mod_fit, newdata=test.set)
+  #accuracy <- table(pred, test.set[,"sim.A.B....sim.A.C."])
+  #sum(diag(accuracy))/sum(accuracy)
+  
+  #Confusion matrix to explore false positives and negatives
+  #pred = predict(mod_fit, newdata=test.set)
+  #confusion <- confusionMatrix(data=pred, test.set$sim.A.B....sim.A.C.)#https://en.wikipedia.org/wiki/Sensitivity_and_specificity
+  
+  #Using 10-fold cross-validation
+  ctrl <- trainControl(method = "repeatedcv", number = 5, savePredictions = TRUE, search = "grid")
+  #tunegrid <- expand.grid(.mtry=c(1:15))#Tuning: https://machinelearningmastery.com/tune-machine-learning-algorithms-in-r/
+  #pred = predict(mod_fit, newdata=testing)
+  
+  #accuracy <- table(pred, testing$sim.A.B....sim.A.C)
+  #accuracy_value <- sum(diag(accuracy))/sum(accuracy)
+  #confusion <- confusionMatrix(data=pred, testing$sim.A.B....sim.A.C)
+  #results_values[nrow(results_values)+1,] <- list(accuracy=accuracy_value, precision=confusion$byClass["Precision"], recall=confusion$byClass["Recall"], f1=confusion$byClass["F1"])
+  
+  #Random Forest
+  #set.seed(7)
+  #mod_fit <- train(sim.A.B....sim.A.C. ~ chroma_diff + mfcc_diff, data=training, method="rf", trControl = ctrl, ntree = 500, tunelength = 10, importance = TRUE)
+  #mod_fit <- train(sim.A.B....sim.A.C. ~ chroma_diff + mfcc_diff, data=training, method="glm", family="binomial", trControl = ctrl)
+  et_grid =  expand.grid(mtry = 4:7, numRandomCuts = 1:10)
+  mod_fit <- train(sim.A.B....sim.A.C. ~ chroma_diff + mfcc_diff, data=training, method="extraTrees", trControl = ctrl, tuneGrid = et_grid, numThreads = 1)
+  pred = predict(mod_fit, newdata=testing)#https://daviddalpiaz.github.io/stat430fa17/labs/enslab/enslab.html
+  
+  accuracy <- table(pred, testing$sim.A.B....sim.A.C)
+  accuracy_value <- sum(diag(accuracy))/sum(accuracy)
+  confusion <- confusionMatrix(data=pred, testing$sim.A.B....sim.A.C)
+  results_values[nrow(results_values)+1,] <- list(accuracy=accuracy_value, precision=confusion$byClass["Precision"], recall=confusion$byClass["Recall"], f1=confusion$byClass["F1"])
+}  
+
+write.csv(results_values, file = "metrics.dat", col.names = TRUE, row.names = FALSE, quote = FALSE)
+
+ci <- (1.96 * sd(results_values$accuracy) / sqrt(nrow(results_values)))
+print(paste(">>>> Accuracy CI [", (mean(results_values$accuracy) - ci), ",", (mean(results_values$accuracy) + ci), "]" ))
+ci <- (1.96 * sd(results_values$recall) / sqrt(nrow(results_values)))
+print(paste(">>>> Recall CI [", (mean(results_values$recall) - ci), ",", (mean(results_values$recall) + ci), "]" ))
+ci <- (1.96 * sd(results_values$precision) / sqrt(nrow(results_values)))
+print(paste(">>>> Precision CI [", (mean(results_values$precision) - ci), ",", (mean(results_values$precision) + ci), "]" ))
+ci <- (1.96 * sd(results_values$f1) / sqrt(nrow(results_values)))
+print(paste(">>>> F1 CI [", (mean(results_values$f1) - ci), ",", (mean(results_values$f1) + ci), "]" ))
+```

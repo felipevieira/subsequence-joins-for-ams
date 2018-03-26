@@ -1,0 +1,59 @@
+> summary(intercept_model)
+
+Call:
+glm(formula = sim.A.B....sim.A.C. ~ 1, family = binomial(), data = the_data)
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+-1.177  -1.177   0.000   1.177   1.177  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)
+(Intercept)  0.00000    0.06462       0        1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 1328.1  on 957  degrees of freedom
+Residual deviance: 1328.1  on 957  degrees of freedom
+AIC: 1330.1
+
+Number of Fisher Scoring iterations: 2
+
+> summary(complete_model)
+
+Call:
+glm(formula = sim.A.B....sim.A.C. ~ simple_chroma_AB + simple_chroma_AC + 
+    simple_chroma_BC + simple_mfcc_AB + simple_mfcc_AC + simple_mfcc_BC, 
+    family = binomial(), data = the_data)
+
+Deviance Residuals: 
+     Min        1Q    Median        3Q       Max  
+-2.39903  -0.96214   0.00632   0.95763   2.49969  
+
+Coefficients:
+                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)       0.0753401  0.5058129   0.149   0.8816    
+simple_chroma_AB -0.1149705  0.0467336  -2.460   0.0139 *  
+simple_chroma_AC  0.1179558  0.0504269   2.339   0.0193 *  
+simple_chroma_BC -0.0043325  0.0528393  -0.082   0.9347    
+simple_mfcc_AB   -0.0024850  0.0002539  -9.788   <2e-16 ***
+simple_mfcc_AC    0.0025622  0.0002574   9.954   <2e-16 ***
+simple_mfcc_BC   -0.0001453  0.0002192  -0.663   0.5076    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 1328.1  on 957  degrees of freedom
+Residual deviance: 1088.0  on 951  degrees of freedom
+AIC: 1102
+
+Number of Fisher Scoring iterations: 4
+
+> logLik(intercept_model)*-2 
+'log Lik.' 1328.07 (df=1)
+> logLik(complete_model)*-2
+'log Lik.' 1087.997 (df=7)
+> vif(complete_model)
+simple_chroma_AB simple_chroma_AC simple_chroma_BC   simple_mfcc_AB   simple_mfcc_AC   simple_mfcc_BC 
+        1.004626         1.166499         1.173388         1.179294         1.214514         1.163570 
