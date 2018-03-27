@@ -1,0 +1,142 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+
+theme_set(theme_minimal())
+```
+
+
+```{r}
+dados = read_csv("https://github.com/felipevieira/subsequence-joins-for-ams/raw/master/data/training_set_sl%3D4_chromaOTI_mfcc.csv")
+
+# dados = read_csv("https://github.com/felipevieira/subsequence-joins-for-ams/raw/master/data/training_set_sl%3D8_chromaOTI_mfcc.csv")
+
+dados = dados %>% 
+    mutate(`sim(A,B) > sim(A,C)` = as.logical(`sim(A,B) > sim(A,C)`), 
+           ABmAC_chroma = simple_chroma_AB - simple_chroma_AC,
+           ABmAC_mfcc = simple_mfcc_AB - simple_mfcc_AC,
+           relative_chroma_ABC = ABmAC_chroma / (`simple_chroma_BC`))
+
+summary(dados)
+```
+
+```{r}
+box_e_pontos = function(p){
+    p + 
+    geom_boxplot(outlier.colour = NA, width = .2) + 
+    geom_jitter(width = .15, alpha = .3, size = .5) + 
+    theme(legend.position = "None")
+}
+
+```
+
+
+```{r}
+dados %>% 
+    gather(key = "comparação", value = "subtração", simple_chroma_AB, simple_chroma_AC, simple_mfcc_AB, simple_mfcc_AC) %>% 
+    ggplot(aes(x = `subtração`, colour = `comparação`)) + 
+    geom_histogram(bins = 30, fill = "white") + 
+    geom_rug(alpha = .2) + 
+    facet_grid(. ~ `comparação`, scales = "free")
+```
+
+
+```{r}
+dados %>% 
+    ggplot(aes(x = `sim(A,B) > sim(A,C)`, 
+               y = log(simple_chroma_AB) - log(simple_chroma_AC), 
+               color = `sim(A,B) > sim(A,C)`))  %>%
+    box_e_pontos()
+```
+
+
+```{r}
+# dados %>% 
+#     ggplot(aes(x = `sim(A,B) > sim(A,C)`, 
+#                y = `simple_chroma(A,B) - simple_chroma(A,C)`, 
+#                color = `sim(A,B) > sim(A,C)`))  %>%
+#     box_e_pontos()
+```
+
+```{r}
+dados %>% 
+    ggplot(aes(x = `sim(A,B) > sim(A,C)`, 
+               y = `simple_mfcc(A,B) - simple_mfcc(A,C)`, 
+               color = `sim(A,B) > sim(A,C)`)) %>% 
+    box_e_pontos()
+
+```
+
+
+```{r}
+dados %>% 
+    ggplot(aes(x = `sim(A,B) > sim(A,C)`, 
+               y = relative_chroma_ABC, 
+               color = `sim(A,B) > sim(A,C)`)) %>% 
+    box_e_pontos()
+```
+
+
+```{r}
+dados %>% 
+    ggplot(aes(x = simple_chroma_AB - simple_chroma_AC, 
+               y = `simple_mfcc(A,B) - simple_mfcc(A,C)`,
+               color = `sim(A,B) > sim(A,C)`)) + 
+    geom_point(size = .8, alpha = .7) 
+
+```
+
+```{r}
+dados %>% 
+    ggplot(aes(x = simple_chroma_AB - simple_chroma_AC, 
+               y = `simple_mfcc(A,B) - simple_mfcc(A,C)`, 
+               fill = `sim(A,B) > sim(A,C)`)) + 
+    # geom_point(size = 3, alpha = .3)
+    geom_hex(alpha = .5)
+```
+
+
+```{r}
+dados %>% 
+    ggplot(aes(x = simple_chroma_AB - simple_chroma_AC, 
+               y = `simple_mfcc(A,B) - simple_mfcc(A,C)`, 
+               color = `sim(A,B) > sim(A,C)`)) + 
+    geom_density2d()
+```
+
+
+
+```{r}
+triplasl = dados %>%
+    arrange(-simple_mfcc_AB) %>% 
+    mutate(t = 1:n()) %>% 
+    gather(
+    key = "comparação",
+    value = "valor",
+    simple_mfcc_AB,
+    simple_mfcc_AC,
+    simple_mfcc_BC, 
+    simple_chroma_AB, 
+    simple_chroma_AC,
+    simple_chroma_BC
+    ) 
+
+triplasl %>% 
+    group_by(`comparação`) %>% 
+    summarise(media = mean(`valor`), 
+              mediana = median(valor), 
+              min = min(valor), 
+              max = max(valor))
+
+# triplasl %>% 
+#     # filter(t <= 10) %>% 
+#     ggplot(aes(x = t,  y = `valor`, colour = `comparação`)) + 
+#     geom_point(alpha = 1, size = 1)
+
+```
+
