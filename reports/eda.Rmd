@@ -13,6 +13,7 @@ theme_set(theme_minimal())
 
 ```{r}
 dados = read_csv(here("data/training_set_deepchromaOTI_mfcc_sl=10.csv"))
+balanceados = read_csv(here("data/balanced_training_set_deepchromaOTI_mfcc_sl=10.csv"))
 
 dados = dados %>% 
     mutate(`sim(A,B) > sim(A,C)` = as.logical(`y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)`), 
@@ -50,17 +51,6 @@ dados %>%
     geom_rug(alpha = .2) + 
     facet_grid(`comparação` ~ ., scales = "free")
 
-```
-
-```{r}
-set.seed(123)
-balanceados = sample_n(dados, NROW(dados)) %>% 
-    mutate(i = 1:n()) %>% 
-    transmute(ab_mfcc = if_else(i < NROW(dados)/2, simple_mfcc_similar, simple_mfcc_dissimilar), 
-              ac_mfcc = if_else(i < NROW(dados)/2, simple_mfcc_dissimilar, simple_mfcc_similar), 
-              ab_chroma = if_else(i < NROW(dados)/2, simple_chroma_similar, simple_chroma_dissimilar), 
-              ac_chroma = if_else(i < NROW(dados)/2, simple_chroma_dissimilar, simple_chroma_similar), 
-              ab_gt_ac = if_else(i < NROW(dados)/2, TRUE, FALSE))
 ```
 
 
@@ -120,28 +110,48 @@ balanceados %>%
 ```
 
 
+```{r}
+library(broom)
+
+tofit = balanceados %>%  
+    mutate(chroma = ab_chroma - ac_chroma, 
+           mfcc = ab_mfcc - ac_mfcc)
+m = glm(ab_gt_ac ~ chroma + mfcc, family = "binomial", tofit)
+
+tidy(m, exponentiate = T)
+
+w_predictions = augment(m, 
+                        type.predict = "response") 
+
+w_predictions = w_predictions %>% 
+  mutate(predicted = ifelse(.fitted > .5, "1", "0"))
+
+table(w_predictions$predicted, w_predictions$ab_gt_ac)
+```
+
+
 
 ```{r}
-triplasl = dados %>%
-    arrange(-simple_mfcc_AB) %>% 
-    mutate(t = 1:n()) %>% 
-    gather(
-    key = "comparação",
-    value = "valor",
-    simple_mfcc_AB,
-    simple_mfcc_AC,
-    simple_mfcc_BC, 
-    simple_chroma_AB, 
-    simple_chroma_AC,
-    simple_chroma_BC
-    ) 
-
-triplasl %>% 
-    group_by(`comparação`) %>% 
-    summarise(media = mean(`valor`), 
-              mediana = median(valor), 
-              min = min(valor), 
-              max = max(valor))
+# triplasl = dados %>%
+#     arrange(-simple_mfcc_AB) %>% 
+#     mutate(t = 1:n()) %>% 
+#     gather(
+#     key = "comparação",
+#     value = "valor",
+#     simple_mfcc_AB,
+#     simple_mfcc_AC,
+#     simple_mfcc_BC, 
+#     simple_chroma_AB, 
+#     simple_chroma_AC,
+#     simple_chroma_BC
+#     ) 
+# 
+# triplasl %>% 
+#     group_by(`comparação`) %>% 
+#     summarise(media = mean(`valor`), 
+#               mediana = median(valor), 
+#               min = min(valor), 
+#               max = max(valor))
 
 # triplasl %>% 
 #     # filter(t <= 10) %>% 
