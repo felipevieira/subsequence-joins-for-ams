@@ -7,34 +7,34 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.cross_validation import cross_val_score
 from sklearn import linear_model
 
-features = pd.read_csv('../data/training_set_deepchromaOTI_mfcc_sl=10.csv')
+features = pd.read_csv('../data/balanced-pairwise-comparisons.csv')
 
 # Switching ~50% of occurrences to false
-features_update = features.sample(200)
-features_update["y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)"] = 0
-features.update(features_update)
+# features_update = features.sample(200)
+# features_update["y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)"] = 0
+# features.update(features_update)
 
 # Adding difference columns
-features['simple_chroma_difference'] = features.apply(
-    lambda row: row['simple_chroma_similar'] - row['simple_chroma_dissimilar'], axis=1)
-features['simple_mfcc_difference'] = features.apply(
-    lambda row: row['simple_mfcc_similar'] - row['simple_mfcc_dissimilar'], axis=1)
+# features['simple_chroma_difference'] = features.apply(
+#     lambda row: row['simple_chroma_similar'] - row['simple_chroma_dissimilar'], axis=1)
+# features['simple_mfcc_difference'] = features.apply(
+#     lambda row: row['simple_mfcc_similar'] - row['simple_mfcc_dissimilar'], axis=1)
 
 # Labels are the values we want to predict
-labels = np.array(features['y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)'])
+labels = np.array(features['ab_gt_ac'])
 
 # Remove labels from predictors
 features = features.drop(
-    'y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)', axis=1)
+    'ab_gt_ac', axis=1)
 
 # Remove the labels non-predictors from the feature set
-features = features.drop('clip_A', axis=1)
-features = features.drop('clip_B', axis=1)
-features = features.drop('clip_C', axis=1)
-features = features.drop('simple_chroma_similar', axis=1)
-features = features.drop('simple_chroma_dissimilar', axis=1)
-features = features.drop('simple_mfcc_similar', axis=1)
-features = features.drop('simple_mfcc_dissimilar', axis=1)
+# features = features.drop('clip_A', axis=1)
+# features = features.drop('clip_B', axis=1)
+# features = features.drop('clip_C', axis=1)
+# features = features.drop('simple_chroma_similar', axis=1)
+# features = features.drop('simple_chroma_dissimilar', axis=1)
+# features = features.drop('simple_mfcc_similar', axis=1)
+# features = features.drop('simple_mfcc_dissimilar', axis=1)
 # features= features.drop('simple_chroma_AB', axis = 1)
 # features= features.drop('simple_chroma_AC', axis = 1)
 # features= features.drop('simple_chroma_BC', axis = 1)
