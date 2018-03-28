@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 from sklearn import linear_model
 
-features = pd.read_csv('../data/balanced-pairwise-comparisons.csv')
+features = pd.read_csv('../data/balanced_threewise-distances_deepchromaOTI_sl10.csv')
 
 # Switching ~50% of occurrences to false
 # features_update = features.sample(200)
@@ -48,12 +48,13 @@ features = features.drop(
 
 # Saving feature names for later use
 feature_list = list(features.columns)
+print feature_list
 # Convert to numpy array
 features = np.array(features)
 
 # Split the data into training and testing sets
 train_features, test_features, train_labels, test_labels = train_test_split(
-    features, labels, test_size=0.20)
+    features, labels, test_size=0.90)
 
 # print('Training Features Shape:', train_features.shape)
 # print('Training Labels Shape:', train_labels.shape)
