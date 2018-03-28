@@ -12,13 +12,30 @@ theme_set(theme_minimal())
 
 
 ```{r}
-dados = read_csv(here("data/training_set_deepchromaOTI_mfcc_sl=10.csv"))
-balanceados = read_csv(here("data/balanced_training_set_deepchromaOTI_mfcc_sl=10.csv"))
+dados = read_csv(here("data/threewise-distances_deepchromaOTI_sl10.csv"),
+                 col_types = "cccddddddddddddl") %>%
+                 select(
+                     mfcc_similar = simple_mfcc_c1,
+                     mfcc_dissimilar = simple_mfcc_c2,
+                     mfcc_sd = simple_mfcc_c3,
+                     mfcc_ds = simple_mfcc_c4,
+                     mfcc_dissimilar_inv = simple_mfcc_c5,
+                     mfcc_similar_inv = simple_mfcc_c6,
+                     chroma_similar = simple_chroma_c1,
+                     chroma_dissimilar = simple_chroma_c2,
+                     chroma_sd = simple_chroma_c3,
+                     chroma_ds = simple_chroma_c4,
+                     chroma_dissimilar_inv = simple_chroma_c5,
+                     chroma_similar_inv = simple_chroma_c6, 
+                     `sim(A,B) > sim(A,C)` = `y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)`
+                 )
+                 
+balanceados = read_csv(here("data/balanced_threewise-distances_deepchromaOTI_sl10.csv"),
+                       col_types = "ddddddddddl")
 
 dados = dados %>% 
-    mutate(`sim(A,B) > sim(A,C)` = as.logical(`y = sim(A,B) > sim(A,C) ^ sim(B,A) > sim(B,C)`), 
-           ABmAC_chroma = simple_chroma_similar - simple_chroma_dissimilar,
-           ABmAC_mfcc = simple_mfcc_similar - simple_mfcc_dissimilar)
+    mutate(ABmAC_chroma = chroma_similar - chroma_dissimilar,
+           ABmAC_mfcc = mfcc_similar - mfcc_dissimilar)
 
 summary(dados)
 ```
@@ -37,7 +54,7 @@ box_e_pontos = function(p){
 ```{r}
 dados %>% 
     gather(key = "comparação", value = "subtração", 
-           simple_chroma_similar, simple_chroma_dissimilar) %>% 
+           chroma_similar, chroma_dissimilar) %>% 
     ggplot(aes(x = `subtração`, colour = `comparação`)) + 
     geom_histogram(bins = 30, fill = "white") + 
     geom_rug(alpha = .2) + 
@@ -45,7 +62,7 @@ dados %>%
 
 dados %>% 
     gather(key = "comparação", value = "subtração", 
-           simple_mfcc_similar, simple_mfcc_dissimilar) %>% 
+           mfcc_similar, mfcc_dissimilar) %>% 
     ggplot(aes(x = `subtração`, colour = `comparação`)) + 
     geom_histogram(bins = 30, fill = "white") + 
     geom_rug(alpha = .2) + 
@@ -65,20 +82,34 @@ balanceados %>%
 
 
 ```{r}
-# dados %>% 
-#     ggplot(aes(x = `sim(A,B) > sim(A,C)`, 
-#                y = `simple_chroma(A,B) - simple_chroma(A,C)`, 
-#                color = `sim(A,B) > sim(A,C)`))  %>%
-#     box_e_pontos()
-```
-
-```{r}
 balanceados %>% 
     ggplot(aes(x = ab_gt_ac, 
                y = ab_chroma - ac_chroma, 
                color = ab_gt_ac))  %>%
     box_e_pontos()
 
+balanceados %>% 
+    ggplot(aes(x = ab_gt_ac, 
+               y = ab_chroma_simetric1 - ac_chroma_simetric1, 
+               color = ab_gt_ac))  %>%
+    box_e_pontos()
+
+
+balanceados %>% 
+    ggplot(aes(x = ab_gt_ac, 
+               y = ab_chroma_simetric1 - ac_chroma_simetric2, 
+               color = ab_gt_ac))  %>%
+    box_e_pontos()
+
+
+```
+
+
+```{r}
+dados %>% 
+    ggplot(aes(x = mfcc_similar, y = mfcc_dissimilar)) + 
+    geom_point() + 
+    geom_abline(slope = 1, intercept = 0)
 ```
 
 
@@ -127,24 +158,27 @@ w_predictions = w_predictions %>%
   mutate(predicted = ifelse(.fitted > .5, "1", "0"))
 
 table(w_predictions$predicted, w_predictions$ab_gt_ac)
+
+w_predictions %>% 
+    summarise(acc = sum((predicted == 1) == ab_gt_ac) / n())
 ```
 
 
 
 ```{r}
-# triplasl = dados %>%
-#     arrange(-simple_mfcc_AB) %>% 
-#     mutate(t = 1:n()) %>% 
-#     gather(
-#     key = "comparação",
-#     value = "valor",
-#     simple_mfcc_AB,
-#     simple_mfcc_AC,
-#     simple_mfcc_BC, 
-#     simple_chroma_AB, 
-#     simple_chroma_AC,
-#     simple_chroma_BC
-#     ) 
+triplasl = dados %>%
+    arrange(-mfcc_AB) %>%
+    mutate(t = 1:n()) %>%
+    gather(
+    key = "comparação",
+    value = "valor",
+    mfcc_similar,
+    mfcc_dissimilar,
+    mfcc_BC,
+    chroma_AB,
+    chroma_AC,
+    chroma_BC
+    )
 # 
 # triplasl %>% 
 #     group_by(`comparação`) %>% 

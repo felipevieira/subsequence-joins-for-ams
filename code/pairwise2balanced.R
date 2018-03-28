@@ -3,21 +3,49 @@ library(here)
 library(purrr)
 
 inputs = c(
-    here("data/training_set_deepchromaOTI_mfcc_sl=4.csv"), 
-    here("data/training_set_deepchromaOTI_mfcc_sl=6.csv"), 
-    here("data/training_set_deepchromaOTI_mfcc_sl=8.csv"), 
-    here("data/training_set_deepchromaOTI_mfcc_sl=10.csv")
+    here("data/threewise-distances_deepchromaOTI_sl10.csv")
 )
 
 pairwise_2_balanced = function(i_file){
-    dados = read_csv(i_file)    
+    pairwise = read_csv(i_file, 
+             col_types = "cccddddddddddddl")
     set.seed(123)
-    balanceados = sample_n(dados, NROW(dados)) %>% 
+    pairwise = pairwise %>% 
+        select(mfcc_similar = simple_mfcc_c1, 
+               mfcc_dissimilar = simple_mfcc_c2, 
+               mfcc_sd = simple_mfcc_c3,
+               mfcc_ds = simple_mfcc_c4,
+               mfcc_dissimilar_inv = simple_mfcc_c5,
+               mfcc_similar_inv = simple_mfcc_c6,
+               chroma_similar = simple_chroma_c1, 
+               chroma_dissimilar = simple_chroma_c2, 
+               chroma_sd = simple_chroma_c3,
+               chroma_ds = simple_chroma_c4,
+               chroma_dissimilar_inv = simple_chroma_c5,
+               chroma_similar_inv = simple_chroma_c6
+               ) %>% 
+        mutate(mfcc_similar_simetric1 = mfcc_similar + mfcc_similar_inv, 
+               mfcc_dissimilar_simetric1 = mfcc_dissimilar + mfcc_dissimilar_inv, 
+               mfcc_similar_simetric2 = min(mfcc_similar, mfcc_similar_inv), 
+               mfcc_dissimilar_simetric2 = min(mfcc_dissimilar, mfcc_dissimilar_inv), 
+               chroma_similar_simetric1 = chroma_similar + chroma_similar_inv, 
+               chroma_dissimilar_simetric1 = chroma_dissimilar + chroma_dissimilar_inv, 
+               chroma_similar_simetric2 = min(chroma_similar, chroma_similar_inv), 
+               chroma_dissimilar_simetric2 = min(chroma_dissimilar, chroma_dissimilar_inv)
+               )
+    
+    balanceados = sample_n(pairwise, NROW(pairwise)) %>% 
         mutate(i = 1:n()) %>% 
-        transmute(ab_mfcc = if_else(i < NROW(dados)/2, simple_mfcc_similar, simple_mfcc_dissimilar), 
-                  ac_mfcc = if_else(i < NROW(dados)/2, simple_mfcc_dissimilar, simple_mfcc_similar), 
-                  ab_chroma = if_else(i < NROW(dados)/2, simple_chroma_similar, simple_chroma_dissimilar), 
-                  ac_chroma = if_else(i < NROW(dados)/2, simple_chroma_dissimilar, simple_chroma_similar), 
+        transmute(ab_mfcc = if_else(i < NROW(dados)/2, mfcc_similar, mfcc_dissimilar), 
+                  ac_mfcc = if_else(i < NROW(dados)/2, mfcc_dissimilar, mfcc_similar), 
+                  ab_chroma = if_else(i < NROW(dados)/2, chroma_similar, chroma_dissimilar), 
+                  ac_chroma = if_else(i < NROW(dados)/2, chroma_dissimilar, chroma_similar), 
+                  ab_mfcc_simetric1 = if_else(i < NROW(dados)/2, mfcc_similar_simetric1, mfcc_dissimilar_simetric1), 
+                  ab_mfcc_simetric2 = if_else(i < NROW(dados)/2, mfcc_similar_simetric2, mfcc_dissimilar_simetric2), 
+                  ab_chroma_simetric1 = if_else(i < NROW(dados)/2, chroma_similar_simetric1, chroma_dissimilar_simetric1), 
+                  ac_chroma_simetric1 = if_else(i < NROW(dados)/2, chroma_dissimilar_simetric1, chroma_similar_simetric1), 
+                  ab_chroma_simetric2 = if_else(i < NROW(dados)/2, chroma_similar_simetric2, chroma_dissimilar_simetric2),
+                  ac_chroma_simetric2 = if_else(i < NROW(dados)/2, chroma_dissimilar_simetric2, chroma_similar_simetric2),
                   ab_gt_ac = if_else(i < NROW(dados)/2, TRUE, FALSE))
     
     balanceados %>% 
