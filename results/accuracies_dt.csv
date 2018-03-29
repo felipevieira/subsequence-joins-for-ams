@@ -1,0 +1,4 @@
+classifier,accuracy
+DecisionTree,0.708333333333
+Logistic,0.682291666667
+Bayes,0.671875
