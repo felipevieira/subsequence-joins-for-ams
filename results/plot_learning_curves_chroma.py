@@ -62,33 +62,39 @@ def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
     plt.xlabel("Training examples")
     plt.ylabel("Score")
    
-    output_file = open("learn-scores.csv", "w")
+    #output_file = open("learn-scores-chroma.csv", "w")
 
     #For each classifier...
     scores_data = {}
     for classif_name in estimators_dic:
 	    print ">> Values for " + classif_name  
 	    classifier =  estimators_dic[classif_name]
-	
-	    train_points, train_scores, test_scores = learning_curve(
-		classifier, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+	    inp_feat = [ features[['diff_chroma']], features[['diff_mfcc']] ]
+	    for inp_index in range(0, len(inp_feat)):
+		    X = inp_feat[inp_index]
+		    train_points, train_scores, test_scores = learning_curve(
+			classifier, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
 
-	    #train_scores_mean = np.mean(train_scores, axis=1)
-	    #train_scores_std = np.std(train_scores, axis=1)
-	    test_scores_mean = np.mean(test_scores, axis=1)
-	    test_scores_std = np.std(test_scores, axis=1)
+		    #train_scores_mean = np.mean(train_scores, axis=1)
+		    #train_scores_std = np.std(train_scores, axis=1)
+		    test_scores_mean = np.mean(test_scores, axis=1)
+		    test_scores_std = np.std(test_scores, axis=1)
 
-	    scores_data[classif_name] = [test_scores_mean, test_scores_std]
+		    #scores_data[classif_name] = [test_scores_mean, test_scores_std]		
+		    if inp_index == 0:
+		    	scores_data[classif_name+"-chroma"] = [test_scores_mean, test_scores_std]
+		    else:
+		    	scores_data[classif_name+"-mfcc"] = [test_scores_mean, test_scores_std]
 
     #Creating plot
     plt.grid()
-    formats = [["r", "o-"], ["g", "x-"], ["b", "p-"], ["c", "s-"], ["y", "v-"]]
+    formats = [["b", "p-"], ["r", "v-"]]#[["r", "o-"], ["g", "x-"], ["b", "p-"], ["c", "s-"], ["y", "v-"]]
     index = 0
-    for classif_name in estimators_dic:
+    for classif_name in scores_data:#estimators_dic:
 	    format_to_use = formats[index]
 	    scores = scores_data[classif_name]
 
-	    output_file.write(classif_name+","+str(np.max(scores[0]))+","+str(np.min(scores[0]))+","+",".join(str(x) for x in scores[0])+"\n")
+	    #output_file.write(classif_name+","+str(np.max(scores[0]))+","+str(np.min(scores[0]))+","+",".join(str(x) for x in scores[0])+"\n")
 
 	    plt.fill_between(train_points, scores[0] - scores[1],
 		             scores[0] + scores[1], alpha=0.1,
@@ -100,7 +106,7 @@ def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
 	#	     label="Cross-validation score")
 	    index = index + 1
 
-    output_file.close()
+    #output_file.close()
     plt.legend(loc="best")
     return plt
 
@@ -112,7 +118,7 @@ raw_features['diff_mfcc'] = (raw_features['base_similar_mfcc'] - raw_features['b
 raw_features['diff_chroma'] = (raw_features['base_similar_chroma'] - raw_features['base_dissimilar_chroma'])
 
 raw_features.reset_index(drop=True)
-features = raw_features[['diff_mfcc', 'diff_chroma', 'ab_gt_ac', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']]
+features = raw_features[['diff_chroma', 'diff_mfcc', 'ab_gt_ac']]
 
 #digits = load_digits()
 #X, y = digits.data, digits.target
@@ -123,12 +129,12 @@ title = "Learning Curves"
 cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
 
 #Bayes
-bayes = GaussianNB()
+#bayes = GaussianNB()
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Logistic
 #title = "Learning Curves (Logistic)"
-logistic = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
+#logistic = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Extra Trees
@@ -138,16 +144,17 @@ extra_trees = ExtraTreesClassifier(n_estimators=60, bootstrap=False, criterion="
 
 #Random Forest
 #title = "Learning Curves (Random Forest)"
-random_forest = RandomForestClassifier(n_estimators=1000, bootstrap=False, criterion="gini", max_features="auto", max_depth=None, min_samples_split=32, min_samples_leaf=2, n_jobs=-1)
+#random_forest = RandomForestClassifier(n_estimators=1000, bootstrap=False, criterion="gini", max_features="auto", max_depth=None, min_samples_split=32, min_samples_leaf=2, n_jobs=-1)
 #RandomForestClassifier(n_estimators=1000, criterion="entropy")
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Decision Tree
 #title = "Learning Curves (Decision Tree)"
-decision_tree = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)
+#ddecision_tree = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)
 #(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
 
-plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": extra_trees, "Random Forest": random_forest, "Decision Tree": decision_tree}, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.55, 1.01), cv=cv, n_jobs=4)
+#{"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": extra_trees, "Random Forest": random_forest, "Decision Tree": decision_tree}
+plot_learning_curve({"Extra Trees": extra_trees}, title, features, features[['ab_gt_ac']], ylim=(0.4, 1.01), cv=cv, n_jobs=4)
 
 #title = "Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
@@ -157,6 +164,6 @@ plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": 
 
 f = plt.figure()
 plt.show()
-f.savefig("all.pdf", bbox_inches='tight')
+f.savefig("all-chroma.pdf", bbox_inches='tight')
 
 

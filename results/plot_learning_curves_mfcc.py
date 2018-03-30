@@ -62,7 +62,7 @@ def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
     plt.xlabel("Training examples")
     plt.ylabel("Score")
    
-    output_file = open("learn-scores.csv", "w")
+    output_file = open("learn-scores-mfcc.csv", "w")
 
     #For each classifier...
     scores_data = {}
@@ -112,7 +112,7 @@ raw_features['diff_mfcc'] = (raw_features['base_similar_mfcc'] - raw_features['b
 raw_features['diff_chroma'] = (raw_features['base_similar_chroma'] - raw_features['base_dissimilar_chroma'])
 
 raw_features.reset_index(drop=True)
-features = raw_features[['diff_mfcc', 'diff_chroma', 'ab_gt_ac', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']]
+features = raw_features[['diff_mfcc', 'ab_gt_ac']]
 
 #digits = load_digits()
 #X, y = digits.data, digits.target
@@ -147,7 +147,7 @@ random_forest = RandomForestClassifier(n_estimators=1000, bootstrap=False, crite
 decision_tree = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)
 #(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
 
-plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": extra_trees, "Random Forest": random_forest, "Decision Tree": decision_tree}, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.55, 1.01), cv=cv, n_jobs=4)
+plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": extra_trees, "Random Forest": random_forest, "Decision Tree": decision_tree}, title, features[['diff_mfcc']], features[['ab_gt_ac']], ylim=(0.55, 1.01), cv=cv, n_jobs=4)
 
 #title = "Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
@@ -157,6 +157,6 @@ plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": 
 
 f = plt.figure()
 plt.show()
-f.savefig("all.pdf", bbox_inches='tight')
+f.savefig("all-mfcc.pdf", bbox_inches='tight')
 
 
