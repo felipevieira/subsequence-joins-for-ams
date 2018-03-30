@@ -12,9 +12,9 @@ from sklearn.model_selection import learning_curve
 from sklearn.model_selection import ShuffleSplit
 import pandas as pd
 
-
-def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=1, train_sizes=np.linspace(.1, 0.8, 5)):
+#np.array([0.1, 0.2, 0.4, 0.6, 0.8])
+def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
+                        n_jobs=1, train_sizes=np.array([0.1, 0.2, 0.4, 0.6, 0.8, 1])):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -61,23 +61,41 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
         plt.ylim(*ylim)
     plt.xlabel("Training examples")
     plt.ylabel("Score")
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
-    train_scores_mean = np.mean(train_scores, axis=1)
-    train_scores_std = np.std(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
-    test_scores_std = np.std(test_scores, axis=1)
-    plt.grid()
 
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
+    #For each classifier...
+    scores_data = {}
+    for classif_name in estimators_dic:
+	    print ">> Values for " + classif_name  
+	    classifier =  estimators_dic[classif_name]
+	
+	    train_points, train_scores, test_scores = learning_curve(
+		classifier, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+
+   	    print str(train_points)	
+	    #train_scores_mean = np.mean(train_scores, axis=1)
+	    #train_scores_std = np.std(train_scores, axis=1)
+	    test_scores_mean = np.mean(test_scores, axis=1)
+	    test_scores_std = np.std(test_scores, axis=1)
+
+	    scores_data[classif_name] = [test_scores_mean, test_scores_std]
+
+    #Creating plot
+    plt.grid()
+    formats = [["r", "o-"], ["g", "x-"], ["b", "p-"], ["c", "s-"], ["y", "v-"]]
+    index = 0
+    for classif_name in estimators_dic:
+	    format_to_use = formats[index]
+	    scores = scores_data[classif_name]
+
+	    plt.fill_between(train_points, scores[0] - scores[1],
+		             scores[0] + scores[1], alpha=0.1,
+		             color=format_to_use[0])
+	    #plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+		#             test_scores_mean + test_scores_std, alpha=0.1, color="g")
+	    plt.plot(train_points, scores[0], format_to_use[1], color=format_to_use[0], label=classif_name, markersize=12)
+	    #plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+	#	     label="Cross-validation score")
+	    index = index + 1
 
     plt.legend(loc="best")
     return plt
@@ -95,34 +113,37 @@ features = raw_features[['diff_mfcc', 'diff_chroma', 'ab_gt_ac', 'similar_dissim
 #digits = load_digits()
 #X, y = digits.data, digits.target
 
-title = "Learning Curves (Naive Bayes)"
+title = "Learning Curves"
 # Cross validation with 100 iterations to get smoother mean test and train
 # score curves, each time with 20% data randomly selected as a validation set.
 cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
 
 #Bayes
-#estimator = GaussianNB()
+bayes = GaussianNB()
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Logistic
 #title = "Learning Curves (Logistic)"
-#estimator = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
+logistic = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Extra Trees
 #title = "Learning Curves (Extra Trees)"
-#estimator = ExtraTreesClassifier(n_estimators=60, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, #min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
+extra_trees = ExtraTreesClassifier(n_estimators=60, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Random Forest
-title = "Learning Curves (Random Forest)"
-estimator = RandomForestClassifier(n_estimators=1000, bootstrap=False, criterion="gini", max_features="auto", max_depth=None, min_samples_split=32, min_samples_leaf=2, n_jobs=-1)#RandomForestClassifier(n_estimators=1000, criterion="entropy")
-plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
+#title = "Learning Curves (Random Forest)"
+random_forest = RandomForestClassifier(n_estimators=1000, bootstrap=False, criterion="gini", max_features="auto", max_depth=None, min_samples_split=32, min_samples_leaf=2, n_jobs=-1)
+#RandomForestClassifier(n_estimators=1000, criterion="entropy")
+#plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Decision Tree
 #title = "Learning Curves (Decision Tree)"
-#estimator = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)#(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
-#plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
+decision_tree = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)
+#(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
+
+plot_learning_curve({"Naive Bayes": bayes, "Logistic": logistic, "Extra Trees": extra_trees, "Random Forest": random_forest, "Decision Tree": decision_tree}, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.55, 1.01), cv=cv, n_jobs=4)
 
 #title = "Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
@@ -130,4 +151,8 @@ plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'sim
 #estimator = SVC(gamma=0.001)
 #plot_learning_curve(estimator, title, X, y, (0.7, 1.01), cv=cv, n_jobs=4)
 
+f = plt.figure()
 plt.show()
+f.savefig("all.pdf", bbox_inches='tight')
+
+
