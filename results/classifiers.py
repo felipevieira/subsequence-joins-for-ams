@@ -22,7 +22,12 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	mode = sys.argv[1]
-	features = pd.read_csv('../data/balanced_threewise-distances_deepchromaOTI_sl4.csv')
+	raw_features = pd.read_csv('../data/balanced_threewise-distances_deepchromaOTI_sl4.csv')
+	raw_features['diff_mfcc'] = (raw_features['base_similar_mfcc'] - raw_features['base_dissimilar_mfcc'])
+	raw_features['diff_chroma'] = (raw_features['base_similar_chroma'] - raw_features['base_dissimilar_chroma'])
+
+	raw_features.reset_index(drop=True)
+	features = raw_features[['diff_mfcc', 'diff_chroma', 'ab_gt_ac', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']]
 
 	# Switching ~50% of occurrences to false
 	# features_update = features.sample(200)
@@ -69,7 +74,7 @@ if __name__ == "__main__":
 	#x_features, test_features, y_labels, test_labels = train_test_split(features, labels, test_size=0.20, train_size=0.8)
 	acc_dic = {"Extra Trees" : [], "Random Forest" : [], "Decision Tree": [], "Logistic": [], "LogisticCV": [], "Bayes": []}
 
-	for index in range(0,30):
+	for index in range(0,1	):
 		train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size=0.20, train_size=0.8)
 
 		if mode == "tune":
@@ -102,7 +107,7 @@ if __name__ == "__main__":
 			classifiers_names = ["Extra Trees", "Random Forest", "Decision Tree", "Logistic"]#, "Nearest Neighbors", "RBF SVM", "Naive Bayes", "Linear SVM"]
 			classifiers = [ExtraTreesClassifier(n_jobs=-1, criterion='entropy'), RandomForestClassifier(n_jobs=-1), DecisionTreeClassifier(), linear_model.LogisticRegressionCV(cv=5)]
 
-			for classifier_index in range(2, len(classifiers)):
+			for classifier_index in range(2, len(classifiers)-1):
 				parameters_to_optimize = parameters_dic[classifiers_names[classifier_index]]
 				best_clf = None
 				best_f1 = []
@@ -166,6 +171,8 @@ if __name__ == "__main__":
 			#CONF Decision Tree	gini	random	None	2	16
 			#CONF Decision Tree	gini	random	None	4	16
 			#CONF Logistic	10	liblinear
+			#CONF Decision Tree	gini	random	None	16	8 -> with differences
+			#CONF Logistic	10000	saga -> with differences
 		
 		
 		# Split the data into training and testing sets

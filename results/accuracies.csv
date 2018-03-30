@@ -1,0 +1,5 @@
+classifier,mean,std,accuracies
+DecisionTree,0.723958333333,0.00.723958333333
+Logistic,0.75,0.00.75
+Logistic,0.744791666667,0.00.744791666667
+Bayes,0.765625,0.00.765625
