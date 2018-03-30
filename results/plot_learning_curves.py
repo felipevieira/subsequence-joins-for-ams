@@ -105,24 +105,24 @@ cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Logistic
-title = "Learning Curves (Logistic)"
-estimator = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
-plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
+#title = "Learning Curves (Logistic)"
+#estimator = linear_model.LogisticRegressionCV(max_iter=10000, solver="saga")#(max_iter=10, solver="liblinear")
+#plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Extra Trees
 #title = "Learning Curves (Extra Trees)"
-#estimator = ExtraTreesClassifier(n_estimators=20, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, #min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
+#estimator = ExtraTreesClassifier(n_estimators=60, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, #min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
 #plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Random Forest
-#title = "Learning Curves (Random Forest)"
-#estimator = RandomForestClassifier(n_estimators=60, bootstrap=True, criterion="entropy", max_features="auto", max_depth=None, #min_samples_split=8, min_samples_leaf=4, n_jobs=-1)#RandomForestClassifier(n_estimators=1000, criterion="entropy")
-#plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
+title = "Learning Curves (Random Forest)"
+estimator = RandomForestClassifier(n_estimators=1000, bootstrap=False, criterion="gini", max_features="auto", max_depth=None, min_samples_split=32, min_samples_leaf=2, n_jobs=-1)#RandomForestClassifier(n_estimators=1000, criterion="entropy")
+plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #Decision Tree
-title = "Learning Curves (Decision Tree)"
-estimator = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)#(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
-plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
+#title = "Learning Curves (Decision Tree)"
+#estimator = DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=16, min_samples_leaf=8)#(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
+#plot_learning_curve(estimator, title, features[['diff_mfcc', 'diff_chroma', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']], features[['ab_gt_ac']], ylim=(0.0, 1.01), cv=cv, n_jobs=4)
 
 #title = "Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:

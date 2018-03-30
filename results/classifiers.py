@@ -171,6 +171,8 @@ if __name__ == "__main__":
 			#CONF Decision Tree	gini	random	None	2	16
 			#CONF Decision Tree	gini	random	None	4	16
 			#CONF Logistic	10	liblinear
+			#CONF Extra Trees	entropy	False	60	auto	None	4	2 -> with differences
+			#CONF Random Forest	gini	False	1000	auto	None	32	2 -> with differences
 			#CONF Decision Tree	gini	random	None	16	8 -> with differences
 			#CONF Logistic	10000	saga -> with differences
 		
