@@ -201,7 +201,8 @@ if __name__ == "__main__":
 
 		acc_dic["Random Forest"].append(acc_rf)
 
--	output_file = open("accuracies-rf.csv", "w")
+	output_file = open("accuracies-rf.csv", "w")
+	output_file.write("classifier,mean,std,accuracies\n")
 	output_file.write("RandomForest,"+str(np.mean(acc_dic["Random Forest"]))+","+str(np.std(acc_dic["Random Forest"]))+",".join(str(x) for x in acc_dic["Random Forest"])+"\n")
 	output_file.close()
 
