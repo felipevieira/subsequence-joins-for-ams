@@ -1,0 +1,4 @@
+classifier,accuracy
+RandomForest,0.739583333333
+Logistic,0.651041666667
+Bayes,0.651041666667

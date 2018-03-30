@@ -1,0 +1,4 @@
+classifier,accuracy
+ExtraTree,0.734375
+Logistic,0.6875
+Bayes,0.708333333333

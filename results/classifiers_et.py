@@ -100,7 +100,7 @@ if __name__ == "__main__":
 		classifiers_names = ["Extra Trees", "Random Forest", "Decision Tree", "Logistic"]#, "Nearest Neighbors", "RBF SVM", "Naive Bayes", "Linear SVM"]
 		classifiers = [ExtraTreesClassifier(n_jobs=-1, criterion='entropy'), RandomForestClassifier(n_jobs=-1), DecisionTreeClassifier(), linear_model.LogisticRegressionCV(cv=5)]
 
-		for classifier_index in range(2, len(classifiers)):
+		for classifier_index in range(0, 1):
 			parameters_to_optimize = parameters_dic[classifiers_names[classifier_index]]
 			best_clf = None
 			best_f1 = []
@@ -175,33 +175,33 @@ if __name__ == "__main__":
 	# print('Testing Labels Shape:', test_labels.shape)
 
 	# Instantiate model with 1000 decision trees
-	#et = classifiers[0]#ExtraTreesClassifier(n_estimators=20, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
+	et = classifiers[0]#ExtraTreesClassifier(n_estimators=20, bootstrap=False, criterion="entropy", max_features="auto", max_depth=None, min_samples_split=4, min_samples_leaf=2, n_jobs=-1)
 	#rf = classifiers[1]#RandomForestClassifier(n_estimators=60, bootstrap=True, criterion="entropy", max_features="auto", max_depth=None, min_samples_split=8, min_samples_leaf=4, n_jobs=-1)#RandomForestClassifier(n_estimators=1000, criterion="entropy")
-	dt = classifiers[2]#DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
+	#dt = classifiers[2]#DecisionTreeClassifier(criterion="gini", splitter="best", max_depth=None, min_samples_split=4, min_samples_leaf=16)
 	#logreg_cv = classifiers[3]#linear_model.LogisticRegressionCV(cv=5, solver="liblinear")
 
 	logreg = linear_model.LogisticRegression()
 	bayes = GaussianNB()
 
 	# Train the models on training data
-	dt.fit(train_features, train_labels)
-	#et.fit(train_features, train_labels)
+	#dt.fit(train_features, train_labels)
+	et.fit(train_features, train_labels)
 	#rf.fit(train_features, train_labels)
 	logreg.fit(train_features, train_labels)
 	#logreg_cv.fit(train_features, train_labels)
 	bayes.fit(train_features, train_labels)
 
-	acc_dt = dt.score(test_features, test_labels)
-	#acc_et = et.score(test_features, test_labels)
+	#acc_dt = dt.score(test_features, test_labels)
+	acc_et = et.score(test_features, test_labels)
 	#acc_rf = rf.score(test_features, test_labels)
 	acc_logreg = logreg.score(test_features, test_labels)
 	#acc_logreg_cv = logreg_cv.score(test_features, test_labels)
 	acc_bayes = bayes.score(test_features, test_labels)
 
-	output_file = open("accuracies.csv", "w")
+	output_file = open("accuracies-et.csv", "w")
 	output_file.write("classifier,accuracy\n")
-	output_file.write("DecisionTree,"+str(acc_dt)+"\n")
-	#output_file.write("ExtraTree,"+str(acc_et)+"\n")
+	#output_file.write("DecisionTree,"+str(acc_dt)+"\n")
+	output_file.write("ExtraTree,"+str(acc_et)+"\n")
 	#output_file.write("RandomForest,"+str(acc_rf)+"\n")
 	output_file.write("Logistic,"+str(acc_logreg)+"\n")
 	#output_file.write("LogisticCV,"+str(acc_logreg_cv)+"\n")
