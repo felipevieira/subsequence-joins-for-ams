@@ -69,7 +69,7 @@ def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
     for classif_name in estimators_dic:
 	    print ">> Values for " + classif_name  
 	    classifier =  estimators_dic[classif_name]
-	    inp_feat = [ features[['diff_chroma']], features[['diff_mfcc']] ]
+	    inp_feat = [ features[['diff_chroma']], features[['diff_mfcc']], features[['diff_chroma', 'diff_mfcc', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']] ]
 	    for inp_index in range(0, len(inp_feat)):
 		    X = inp_feat[inp_index]
 		    train_points, train_scores, test_scores = learning_curve(
@@ -83,12 +83,14 @@ def plot_learning_curve(estimators_dic, title, X, y, ylim=None, cv=None,
 		    #scores_data[classif_name] = [test_scores_mean, test_scores_std]		
 		    if inp_index == 0:
 		    	scores_data[classif_name+"-chroma"] = [test_scores_mean, test_scores_std]
-		    else:
+		    elif inp_index == 1:
 		    	scores_data[classif_name+"-mfcc"] = [test_scores_mean, test_scores_std]
+		    else:
+		    	scores_data[classif_name+"-chroma+mfcc"] = [test_scores_mean, test_scores_std]
 
     #Creating plot
     plt.grid()
-    formats = [["b", "p-"], ["r", "v-"]]#[["r", "o-"], ["g", "x-"], ["b", "p-"], ["c", "s-"], ["y", "v-"]]
+    formats = [["r", "v-"], ["g", "s-"], ["b", "p-"]]#[["r", "o-"], ["g", "x-"], ["b", "p-"], ["c", "s-"], ["y", "v-"]]
     index = 0
     for classif_name in scores_data:#estimators_dic:
 	    format_to_use = formats[index]
@@ -118,7 +120,7 @@ raw_features['diff_mfcc'] = (raw_features['base_similar_mfcc'] - raw_features['b
 raw_features['diff_chroma'] = (raw_features['base_similar_chroma'] - raw_features['base_dissimilar_chroma'])
 
 raw_features.reset_index(drop=True)
-features = raw_features[['diff_chroma', 'diff_mfcc', 'ab_gt_ac']]
+features = raw_features[['diff_chroma', 'diff_mfcc', 'ab_gt_ac', 'similar_dissimilar_chroma', 'similar_dissimilar_mfcc']]
 
 #digits = load_digits()
 #X, y = digits.data, digits.target
@@ -164,6 +166,6 @@ plot_learning_curve({"Extra Trees": extra_trees}, title, features, features[['ab
 
 f = plt.figure()
 plt.show()
-f.savefig("all-chroma.pdf", bbox_inches='tight')
+f.savefig("all-chroma+mfcc.pdf", bbox_inches='tight')
 
 
